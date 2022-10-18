@@ -1,0 +1,48 @@
+
+
+import requests
+from bs4 import BeautifulSoup
+import re
+import csv
+
+def check_for_keywords(text):
+    if re.search(r'\bventure capital\b', text, re.IGNORECASE):
+        return 'venture capital'
+    elif re.search(r'\bVC\b', text, re.IGNORECASE):
+        return 'VC'
+    else:
+        return None
+
+def savecsv():
+    with open('familyoffice.csv', 'w') as f:
+        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+with open('familyoffice.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    rows = list(reader)
+
+for row in rows:
+    if 'keyword' not in row:
+        try:
+            url = row['url']
+            print(url)
+            req=requests.get(url)
+            content=req.text
+            soup = BeautifulSoup(content, 'html.parser')
+            text = soup.get_text()
+            row['keyword'] = check_for_keywords(text)
+            print(row['keyword'])
+            #save csv as we go, in case it's too long
+            #currently, the keyword is not being saved...
+            savecsv()
+        except:
+            row['keyword'] = 'error'
+            print(row['keyword'])
+
+#save full csv at end when complete
+with open('familyoffice_keyword_added.csv', 'w') as f:
+    writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+    writer.writeheader()
+    writer.writerows(rows)
